@@ -17,7 +17,7 @@ jobs:
           terraform_wrapper: false
       - run: terraform fmt -recursive && terraform init -backend=false && terraform validate
       - working-directory: examples/basic
-        run: terraform init -backend=false && terraform validate && terraform plan -out=tfplan.binary && terraform show -json tfplan.binary > tfplan.json
+        run: terraform init -backend=false && terraform validate && terraform plan -input=false
       - uses: aquasecurity/trivy-action@master
         with:
           scan-type: config
@@ -27,8 +27,8 @@ jobs:
           severity: "CRITICAL,HIGH"
       - uses: bridgecrewio/checkov-action@v12
         with:
-          framework: terraform_plan
-          file: examples/basic/tfplan.json
+          framework: terraform
+          directory: examples/basic
           skip_check: "CKV_AWS_18,CKV_AWS_21,CKV_AWS_144,CKV_AWS_145,CKV2_AWS_6,CKV2_AWS_62"
           soft_fail: false
       - run: sha256sum versions.tf variables.tf main.tf outputs.tf examples/basic/main.tf > SHA256SUMS && cat SHA256SUMS
