@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-data "aws_partition" "current" {}
 
 resource "aws_kms_key" "fedramp_s3" {
   description             = "FedRAMP High CMK for ${var.bucket_name} (SC-28 / FIPS 140-3)"
@@ -11,7 +9,7 @@ resource "aws_kms_key" "fedramp_s3" {
       {
         Sid       = "EnableRootAccountPermissions"
         Effect    = "Allow"
-        Principal = { AWS = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Principal = { AWS = "arn:${var.aws_partition}:iam::${var.aws_account_id}:root" }
         Action    = "kms:*"
         Resource  = "*"
       },
@@ -21,7 +19,7 @@ resource "aws_kms_key" "fedramp_s3" {
         Principal = { Service = "://amazonaws.com" }
         Action    = ["kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:DescribeKey"]
         Resource  = "*"
-        Condition = { StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id } }
+        Condition = { StringEquals = { "aws:SourceAccount" = var.aws_account_id } }
       }
     ]
   })
