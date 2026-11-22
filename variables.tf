@@ -40,21 +40,17 @@ variable "kms_key_deletion_window_days" {
   type    = number
   default = 30
   validation {
-    condition     = var.kms_key_deletion_window_days >= 7 && var.kms_key_deletion_window_days  examples/basic/main.tf
-provider "aws" {
-  region                      = "us-gov-west-1"
-  access_key                  = "mock_access_key"
-  secret_key                  = "mock_secret_key"
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
+    condition     = var.kms_key_deletion_window_days >= 7 && var.kms_key_deletion_window_days <= 30
+    error_message = "KMS key deletion window must be 7-30 days."
+  }
 }
 
-module "fedramp_cui_vault" {
-  source                   = "../../"
-  bucket_name              = "dod-agency-cui-telemetry-vault-001"
-  aws_account_id           = "123456789012"
-  aws_partition            = "aws-us-gov"
-  retention_days           = 2190
-  authorized_iac_role_arns = ["arn:aws-us-gov:iam::123456789012:role/GitHubActionsTerraformDeployRole"]
+variable "tags" {
+  type = map(string)
+  default = {
+    ComplianceFramework = "FedRAMP-High-NIST-800-53-Rev5"
+    ImpactLevel         = "DoD-SRG-IL4-IL5"
+    DataClassification  = "CUI"
+    ManagedBy           = "Terraform"
+  }
 }
