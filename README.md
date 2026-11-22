@@ -1,2 +1,33 @@
 # fedramp-s3-golden-path
-Preventive Terraform guardrails for **GovTech & Defense** aligned to **FedRAMP High**, **NIST SP 800-53 Rev. 5** (`SC-28`, `SC-8`, `AU-9`, `AC-6`, `CP-9`), **FIPS 140-3**, and **DoD SRG (IL4/IL5)**.
+
+[![FedRAMP High Terraform Guardrails CI](https://github.com)](https://github.com)
+
+Preventive Infrastructure-as-Code (Terraform) guardrails for **GovTech & Defense** workloads aligned to **FedRAMP High**, **NIST SP 800-53 Rev. 5**, **FIPS 140-3**, and **DoD Cloud Computing SRG (IL4/IL5)**.
+
+> **Companion Repository:** Pairs with [`govtech-s3-telemetry-lab`](https://github.com) for detective CUI/EDIPI telemetry sanitization, SLO burn-rate alerting, and circuit-breaker self-healing.
+
+## Architecture & Compliance Control Matrix
+
+| Control Family | Requirement | Preventive Guardrail Enforced |
+| :--- | :--- | :--- |
+| **SC-28 / FIPS 140-3** | Protection of Information at Rest | Dedicated KMS CMK with automatic key rotation (`enable_key_rotation = true`) + bucket policy denying `s3:PutObject` without `aws:kms`. |
+| **SC-8** | Transmission Confidentiality | Explicit `aws:SecureTransport = false` deny policies on both primary CUI and audit-log buckets. |
+| **AU-9** | Protection of Audit Information | S3 Object Lock in `COMPLIANCE` mode (`retention_days >= 2190` / 6 years) + isolated server access logging bucket. |
+| **AC-6** | Least Privilege / Anti-ClickOps | Bucket policy denying manual policy, encryption, versioning, Object Lock, or deletion mutations outside `authorized_iac_role_arns`. |
+| **CP-9** | System Backup & Lifecycle | Mandatory bucket versioning + Glacier archival lifecycle rules for noncurrent CUI versions and audit logs. |
+
+## Usage
+
+```hcl
+module "fedramp_cui_vault" {
+  source                   = "://github.com"
+  bucket_name              = "dod-agency-cui-telemetry-vault-001"
+  aws_account_id           = "123456789012"
+  aws_partition            = "aws-us-gov"
+  retention_days           = 2190
+  authorized_iac_role_arns = ["arn:aws-us-gov:iam::123456789012:role/GitHubActionsTerraformDeployRole"]
+}
+```
+
+## Policy-as-Code CI Pipeline
+Every push runs offline `terraform fmt`, `terraform validate`, `terraform plan`, **Aquasecurity Trivy**, and **Bridgecrew Checkov** policy verification alongside SHA-256 artifact manifests.
