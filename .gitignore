@@ -1,0 +1,7 @@
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+tfplan.binary
+tfplan.json
+SHA256SUMS
